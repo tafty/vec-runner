@@ -7,7 +7,7 @@
 #pragma vx_music vx_music_1
 
 #define DEFAULT_SCALE 0x7F
-#define DEFAULT_INTENSITY 0x7F
+#define DEFAULT_INTENSITY 0x5F
 
 const int8_t ship_max_x = 70;
 const int8_t ship_max_y = 84;
@@ -33,6 +33,65 @@ struct game_object {
 
 
 static struct game_object player;
+
+
+// START cmoc-classics-coder
+int8_t last_horizontal1;
+int8_t last_vertical1;
+
+void my_joy_digital() {
+  asm {
+    JSR 0xF1F8
+  }
+}
+
+int8_t my_controller_joystick_1_x() {
+  int8_t flag;
+
+  asm {
+    LDA     0xC81B
+    STA     flag
+  }
+
+  //print_str_c(-50, -80, (flag > 0 ? "RIGHT" : (flag < 0 ? "LEFT" : "CENTRE")));
+  return flag;
+}
+
+int8_t my_controller_joystick_1_y() {
+  int8_t flag;
+
+  asm {
+    LDA     0xC81C
+    STA     flag
+  }
+
+  //print_str_c(-50, 20, (flag > 0 ? "UP" : (flag < 0 ? "DOWN" : "CENTRE")));
+  return flag;
+}
+
+void my_controller_check_joysticks() {
+  //last_horizontal1 = my_controller_joystick_1_x();
+  //last_vertical1 = my_controller_joystick_1_y();
+
+  my_joy_digital();
+}
+
+uint8_t my_controller_joystick_1_left() {
+  return (my_controller_joystick_1_x() < 0);
+}
+
+uint8_t my_controller_joystick_1_right() {
+  return (my_controller_joystick_1_x() > 0);
+}
+
+uint8_t my_controller_joystick_1_down() {
+  return (my_controller_joystick_1_y() < 0);
+}
+
+uint8_t my_controller_joystick_1_up() {
+  return (my_controller_joystick_1_y() > 0);
+}
+// END cmoc-classics-coder
 
 void vectrex_init() {
     set_beam_intensity(DEFAULT_INTENSITY);
@@ -88,19 +147,19 @@ void game_init() {
 }
 
 void game_input() {
-    controller_check_joysticks();
+    my_controller_check_joysticks();
 
-    if (controller_joystick_1_up() && can_ship_move_up()) {
+    if (my_controller_joystick_1_up() && can_ship_move_up()) {
         player.y += ship_speed;
     } 
-    else if (controller_joystick_1_down() && can_ship_move_down()) {
+    else if (my_controller_joystick_1_down() && can_ship_move_down()) {
         player.y -= ship_speed;
     } 
 
-    if (controller_joystick_1_left() && can_ship_move_left()) {
+    if (my_controller_joystick_1_left() && can_ship_move_left()) {
         player.x -= ship_speed;
     } 
-    else if (controller_joystick_1_right() && can_ship_move_right()) {
+    else if (my_controller_joystick_1_right() && can_ship_move_right()) {
 		player.x += ship_speed;
     } 
 }
@@ -111,7 +170,7 @@ int main() {
 
 	while(1) {
 		wait_recal();
-		intensity_a(0x7f);
+		intensity_a(DEFAULT_INTENSITY);
 
 		game_input();
 
